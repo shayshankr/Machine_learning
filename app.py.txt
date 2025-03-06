@@ -1,7 +1,8 @@
 import streamlit as st
 import librosa
 import numpy as np
-import soundfile as sf
+from pydub import AudioSegment
+import io
 import matplotlib.pyplot as plt
 
 # Title of the app
@@ -9,12 +10,20 @@ st.title("🎤 Learn Songs and Phrases with ML")
 
 # Upload audio file
 st.write("### Upload your audio file (song or phrase)")
-audio_file = st.file_uploader("Choose a WAV file", type=["wav"])
+audio_file = st.file_uploader("Choose an audio file", type=["wav", "mp3", "ogg", "flac", "m4a"])
 
 if audio_file is not None:
-    # Load the audio file
-    st.audio(audio_file, format="audio/wav")
-    y, sr = librosa.load(audio_file, sr=None)
+    # Load the audio file using pydub
+    file_details = {"filename": audio_file.name, "filetype": audio_file.type, "filesize": audio_file.size}
+    st.write(file_details)
+
+    # Convert uploaded file to a format librosa can read
+    audio_bytes = audio_file.read()
+    audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format=file_details["filetype"].split("/")[1])
+    audio_segment.export("temp.wav", format="wav")  # Convert to WAV for librosa
+
+    # Load the audio file with librosa
+    y, sr = librosa.load("temp.wav", sr=None)
 
     # Display basic audio information
     st.write("### Audio Information")
