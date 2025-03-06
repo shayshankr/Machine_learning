@@ -1,0 +1,50 @@
+import streamlit as st
+import librosa
+import numpy as np
+import soundfile as sf
+import matplotlib.pyplot as plt
+
+# Title of the app
+st.title("🎤 Learn Songs and Phrases with ML")
+
+# Upload audio file
+st.write("### Upload your audio file (song or phrase)")
+audio_file = st.file_uploader("Choose a WAV file", type=["wav"])
+
+if audio_file is not None:
+    # Load the audio file
+    st.audio(audio_file, format="audio/wav")
+    y, sr = librosa.load(audio_file, sr=None)
+
+    # Display basic audio information
+    st.write("### Audio Information")
+    st.write(f"Sample Rate: {sr} Hz")
+    st.write(f"Duration: {len(y) / sr:.2f} seconds")
+
+    # Analyze pitch (for songs)
+    st.write("### Pitch Analysis")
+    pitches, magnitudes = librosa.core.piptrack(y=y, sr=sr)
+    pitch_mean = np.mean(pitches[pitches > 0])  # Ignore zero pitches
+    st.write(f"Average Pitch: {pitch_mean:.2f} Hz")
+
+    # Plot the waveform
+    st.write("### Waveform")
+    fig, ax = plt.subplots()
+    librosa.display.waveshow(y, sr=sr, ax=ax)
+    ax.set(title="Waveform", xlabel="Time (s)", ylabel="Amplitude")
+    st.pyplot(fig)
+
+    # Plot the spectrogram
+    st.write("### Spectrogram")
+    D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    fig, ax = plt.subplots()
+    librosa.display.specshow(D, sr=sr, x_axis="time", y_axis="log", ax=ax)
+    ax.set(title="Spectrogram")
+    st.pyplot(fig)
+
+    # Provide feedback (example)
+    st.write("### Feedback")
+    if pitch_mean > 200:
+        st.success("Great job! Your pitch is on point. 🎶")
+    else:
+        st.warning("Try to sing a bit higher! �")
